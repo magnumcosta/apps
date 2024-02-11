@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 
 consultaGrupoMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-material/1_consultarGrupoMaterial'
 
@@ -24,31 +25,37 @@ def consultar_grupo_material(pagina, codigo_grupo):
     else:
         return None
 
+def converter_para_csv(dados):
+    if dados and 'resultado' in dados:
+        df = pd.DataFrame(dados['resultado'])
+        return df.to_csv(sep=';', index=False)
+    else:
+        return "Nenhum dado para exportar"
+
 # Streamlit UI
 st.title("Consulta de Grupos de Material")
 
-# Obter grupos para seleção
 grupos = obter_grupos()
 grupo_selecionado = st.selectbox("Selecione o grupo para consulta", grupos, format_func=lambda x: x[1], key='grupo_selecionado')
 
-# Incluindo um botão de consulta
 if st.button('Consultar', key='btn_consultar'):
     if grupo_selecionado:
         codigo_grupo, nome_grupo = grupo_selecionado
-        dados_grupo = consultar_grupo_material(1, codigo_grupo)  # Consulta inicial para obter o total de páginas
-        if dados_grupo:
-            total_paginas = dados_grupo.get('totalPaginas', 1)
-            st.write(f"Total de páginas para {nome_grupo.split(' (código:')[0]}: {total_paginas}")
-            
-            # Usando a key para garantir um identificador único para o widget
-            pagina_key = f"pagina_{codigo_grupo}"
-            pagina = st.number_input("Escolha a página", min_value=1, max_value=total_paginas, value=1, key=pagina_key)
-            
-            # Consultar dados da página selecionada
-            dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
-            if dados_pagina:
-                st.json(dados_pagina)
-            else:
-                st.error("Erro ao obter dados da página selecionada.")
+        # Usando a key para garantir um identificador único para o widget
+        pagina_key = f"pagina_{codigo_grupo}"
+        pagina = st.number_input("Escolha a página para download", min_value=1, value=1, key=pagina_key)
+        
+        dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
+        if dados_pagina:
+            csv_data = converter_para_csv(dados_pagina)
+            st.download_button(
+                label="Download dos dados em CSV",
+                data=csv_data,
+                file_name=f"dados_grupo_{codigo_grupo}_pagina_{pagina}.csv",
+                mime='text/csv',
+            )
         else:
-            st.error("Erro ao acessar detalhes do grupo.")
+            st.error("Erro ao obter dados da página selecionada.")
+else:
+    st.info("Selecione um grupo e clique em 'Consultar' para prosseguir.")
+
