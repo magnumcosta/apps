@@ -1,32 +1,52 @@
 import streamlit as st
 import requests
 
-consultaGrupoMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-material/1_consultarGrupoMaterial?pagina='
+consultaGrupoMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-material/1_consultarGrupoMaterial'
 
-def consultar_grupo_material(pagina, codigo_grupo=None):
-    # Construindo a URL base com o número da página
-    consultaGrupoMaterial_url = f"{consultaGrupoMaterial_base_url}{pagina}"
+def obter_grupos():
+    response = requests.get(f"{consultaGrupoMaterial_base_url}?pagina=1")
+    if response.status_code == 200:
+        grupos = response.json().get('resultado', [])
+        return [(grupo['codigoGrupo'], grupo['nomeGrupo']) for grupo in grupos]
+    else:
+        return []
+
+def consultar_grupo_material(pagina, codigo_grupo):
+    params = {
+        'pagina': pagina,
+    }
+    if codigo_grupo:
+        params['codigoGrupo'] = codigo_grupo
     
-    # Adicionando o parâmetro opcional codigoGrupo, se fornecido
-    if codigo_grupo is not None:
-        consultaGrupoMaterial_url += f"&codigoGrupo={codigo_grupo}"
-    
-    # Fazendo a requisição GET com o parâmetro opcional, se aplicável
-    response = requests.get(consultaGrupoMaterial_url)
+    response = requests.get(consultaGrupoMaterial_base_url, params=params)
     if response.status_code == 200:
         return response.json()
     else:
         return None
 
-# Criando inputs no Streamlit para número da página e código do grupo
-pagina = st.number_input("Digite o número da página", min_value=1, value=1, step=1)
-codigo_grupo = st.text_input("Digite o código do grupo (opcional)", "")
+# Streamlit UI
+st.title("Consulta de Grupos de Material")
 
-# Chamando a função com o número da página e o código do grupo (se fornecido)
-dados = consultar_grupo_material(pagina, codigo_grupo if codigo_grupo != "" else None)
+# Obter grupos para seleção
+grupos = obter_grupos()
+grupo_selecionado = st.selectbox("Selecione o grupo para consulta", grupos, format_func=lambda x: x[1])
 
-# Exibindo os dados ou uma mensagem de erro
-if dados:
-    st.write(dados)
-else:
-    st.error("Erro ao acessar o endpoint")
+# Verificar se um grupo foi selecionado
+if grupo_selecionado:
+    codigo_grupo, nome_grupo = grupo_selecionado
+    dados_grupo = consultar_grupo_material(1, codigo_grupo)  # Consulta inicial para obter o total de páginas
+    if dados_grupo:
+        total_paginas = dados_grupo.get('totalPaginas', 1)
+        st.write(f"Total de páginas para {nome_grupo}: {total_paginas}")
+        
+        # Permitir que o usuário escolha a página
+        pagina = st.number_input("Escolha a página", min_value=1, max_value=total_paginas, value=1)
+        
+        # Consultar dados da página selecionada
+        dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
+        if dados_pagina:
+            st.json(dados_pagina)
+        else:
+            st.error("Erro ao obter dados da página selecionada.")
+    else:
+        st.error("Erro ao acessar detalhes do grupo.")
