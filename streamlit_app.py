@@ -41,21 +41,27 @@ grupo_selecionado = st.selectbox("Selecione o grupo para consulta", grupos, form
 if st.button('Consultar', key='btn_consultar'):
     if grupo_selecionado:
         codigo_grupo, nome_grupo = grupo_selecionado
-        # Usando a key para garantir um identificador único para o widget
-        pagina_key = f"pagina_{codigo_grupo}"
-        pagina = st.number_input("Escolha a página para download", min_value=1, value=1, key=pagina_key)
-        
-        dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
-        if dados_pagina:
-            csv_data = converter_para_csv(dados_pagina)
-            st.download_button(
-                label="Download dos dados em CSV",
-                data=csv_data,
-                file_name=f"dados_grupo_{codigo_grupo}_pagina_{pagina}.csv",
-                mime='text/csv',
-            )
+        dados_grupo = consultar_grupo_material(1, codigo_grupo)  # Consulta inicial para obter o total de páginas
+        if dados_grupo:
+            total_paginas = dados_grupo.get('totalPaginas', 1)
+            st.write(f"Total de páginas para {nome_grupo.split(' (código:')[0]}: {total_paginas}")
+            
+            pagina_key = f"pagina_{codigo_grupo}"
+            pagina = st.number_input("Escolha a página para download", min_value=1, max_value=total_paginas, value=1, key=pagina_key)
+            
+            dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
+            if dados_pagina:
+                csv_data = converter_para_csv(dados_pagina)
+                st.download_button(
+                    label="Download dos dados em CSV",
+                    data=csv_data,
+                    file_name=f"dados_grupo_{codigo_grupo}_pagina_{pagina}.csv",
+                    mime='text/csv',
+                )
+            else:
+                st.error("Erro ao obter dados da página selecionada.")
         else:
-            st.error("Erro ao obter dados da página selecionada.")
+            st.error("Erro ao acessar detalhes do grupo.")
 else:
     st.info("Selecione um grupo e clique em 'Consultar' para prosseguir.")
 
