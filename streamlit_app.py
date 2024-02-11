@@ -7,7 +7,6 @@ def obter_grupos():
     response = requests.get(f"{consultaGrupoMaterial_base_url}?pagina=1")
     if response.status_code == 200:
         grupos = response.json().get('resultado', [])
-        # Incluindo o código do grupo no retorno
         return [(grupo['codigoGrupo'], f"{grupo['nomeGrupo']} (código: {grupo['codigoGrupo']})") for grupo in grupos]
     else:
         return []
@@ -30,11 +29,10 @@ st.title("Consulta de Grupos de Material")
 
 # Obter grupos para seleção
 grupos = obter_grupos()
-# Alteração para incluir o código do grupo junto ao nome no dropdown
-grupo_selecionado = st.selectbox("Selecione o grupo para consulta", grupos, format_func=lambda x: x[1])
+grupo_selecionado = st.selectbox("Selecione o grupo para consulta", grupos, format_func=lambda x: x[1], key='grupo_selecionado')
 
 # Incluindo um botão de consulta
-if st.button('Consultar'):
+if st.button('Consultar', key='btn_consultar'):
     if grupo_selecionado:
         codigo_grupo, nome_grupo = grupo_selecionado
         dados_grupo = consultar_grupo_material(1, codigo_grupo)  # Consulta inicial para obter o total de páginas
@@ -42,8 +40,9 @@ if st.button('Consultar'):
             total_paginas = dados_grupo.get('totalPaginas', 1)
             st.write(f"Total de páginas para {nome_grupo.split(' (código:')[0]}: {total_paginas}")
             
-            # Permitir que o usuário escolha a página
-            pagina = st.number_input("Escolha a página", min_value=1, max_value=total_paginas, value=1)
+            # Usando a key para garantir um identificador único para o widget
+            pagina_key = f"pagina_{codigo_grupo}"
+            pagina = st.number_input("Escolha a página", min_value=1, max_value=total_paginas, value=1, key=pagina_key)
             
             # Consultar dados da página selecionada
             dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
@@ -53,17 +52,3 @@ if st.button('Consultar'):
                 st.error("Erro ao obter dados da página selecionada.")
         else:
             st.error("Erro ao acessar detalhes do grupo.")
-
-        st.write(f"Total de páginas para {nome_grupo}: {total_paginas}")
-        
-        # Permitir que o usuário escolha a página
-        pagina = st.number_input("Escolha a página", min_value=1, max_value=total_paginas, value=1)
-        
-        # Consultar dados da página selecionada
-        dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
-        if dados_pagina:
-            st.json(dados_pagina)
-        else:
-            st.error("Erro ao obter dados da página selecionada.")
-    else:
-        st.error("Erro ao acessar detalhes do grupo.")
