@@ -19,7 +19,13 @@ def obter_itens(tipo_item, codigo_item_catalogo=''):
     if response.status_code == 200:
         json_response = response.json()
         itens = json_response.get('resultado', [])
-        return [(item['codigoItem'], f"{item.get('descricao', 'Descrição não disponível')} (código: {item['codigoItem']})") for item in itens]
+        itens_formatados = []
+        for item in itens:
+            if 'codigoItem' in item and 'descricao' in item:
+                codigo = item['codigoItem']
+                descricao = item.get('descricao', 'Descrição não disponível')
+                itens_formatados.append((codigo, f"{descricao} (código: {codigo})"))
+        return itens_formatados
     else:
         return []
 
@@ -36,4 +42,3 @@ if st.button('Consultar', key='btn_consultar'):
             st.write(descricao)
     else:
         st.error("Nenhum item encontrado ou erro na consulta.")
-
