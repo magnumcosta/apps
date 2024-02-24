@@ -2,66 +2,36 @@ import streamlit as st
 import requests
 import pandas as pd
 
-consultaGrupoMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-material/1_consultarGrupoMaterial'
+# URLs atualizadas
+consultarItemMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-pesquisa-preco/1_consultarMaterial'
+consultarItemServico_base_url = 'https://dadosabertos.compras.gov.br/modulo-pesquisa-preco/3_consultarServico'
 
-def obter_grupos():
-    response = requests.get(f"{consultaGrupoMaterial_base_url}?pagina=1")
-    if response.status_code == 200:
-        grupos = response.json().get('resultado', [])
-        return [(grupo['codigoGrupo'], f"{grupo['nomeGrupo']} (código: {grupo['codigoGrupo']})") for grupo in grupos]
+def obter_itens(tipo_item, codigo_item_catalogo=''):
+    if tipo_item == 'Material':
+        response = requests.get(f"{consultarItemMaterial_base_url}?pagina=1&tamanhoPagina=500&codigoItemCatalogo={codigo_item_catalogo}")
+    elif tipo_item == 'Serviço':
+        response = requests.get(f"{consultarItemServico_base_url}?pagina=1&codigoItemCatalogo={codigo_item_catalogo}")
     else:
         return []
 
-def consultar_grupo_material(pagina, codigo_grupo):
-    params = {
-        'pagina': pagina,
-    }
-    if codigo_grupo:
-        params['codigoGrupo'] = codigo_grupo
-    
-    response = requests.get(consultaGrupoMaterial_base_url, params=params)
     if response.status_code == 200:
-        return response.json()
+        itens = response.json().get('resultado', [])
+        return [(item['codigoItem'], f"{item['descricao']} (código: {item['codigoItem']})") for item in itens]
     else:
-        return None
-
-def converter_para_csv(dados):
-    if dados and 'resultado' in dados:
-        df = pd.DataFrame(dados['resultado'])
-        return df.to_csv(sep=';', index=False)
-    else:
-        return "Nenhum dado para exportar"
+        return []
 
 # Streamlit UI
-st.title("Consulta de Grupos de Material")
+st.title("Consulta de Itens de Material e Serviço")
 
-grupos = obter_grupos()
-grupo_selecionado = st.selectbox("Selecione o grupo para consulta", grupos, format_func=lambda x: x[1], key='grupo_selecionado')
+tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
+
+codigo_item_catalogo = st.text_input("Código do Item de Catálogo (opcional)", key='codigo_item_catalogo')
 
 if st.button('Consultar', key='btn_consultar'):
-    if grupo_selecionado:
-        codigo_grupo, nome_grupo = grupo_selecionado
-        dados_grupo = consultar_grupo_material(1, codigo_grupo)  # Consulta inicial para obter o total de páginas
-        if dados_grupo:
-            total_paginas = dados_grupo.get('totalPaginas', 1)
-            st.write(f"Total de páginas para {nome_grupo.split(' (código:')[0]}: {total_paginas}")
-            
-            pagina_key = f"pagina_{codigo_grupo}"
-            pagina = st.number_input("Escolha a página para download", min_value=1, max_value=total_paginas, value=1, key=pagina_key)
-            
-            dados_pagina = consultar_grupo_material(pagina, codigo_grupo)
-            if dados_pagina:
-                csv_data = converter_para_csv(dados_pagina)
-                st.download_button(
-                    label="Download dos dados em CSV",
-                    data=csv_data,
-                    file_name=f"dados_grupo_{codigo_grupo}_pagina_{pagina}.csv",
-                    mime='text/csv',
-                )
-            else:
-                st.error("Erro ao obter dados da página selecionada.")
-        else:
-            st.error("Erro ao acessar detalhes do grupo.")
-else:
-    st.info("Selecione um grupo e clique em 'Consultar' para prosseguir.")
+    itens = obter_itens(tipo_item, codigo_item_catalogo)
+    if itens:
+        for item in itens:
+            st.write(item[1])
+    else:
+        st.error("Nenhum item encontrado ou erro na consulta.")
 
