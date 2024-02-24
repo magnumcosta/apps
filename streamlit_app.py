@@ -16,8 +16,13 @@ def obter_itens(tipo_item, codigo_item_catalogo):
     response = requests.get(url, params=params)
     if response.status_code == 200:
         json_response = response.json()
-        st.write("Estrutura da Resposta:", json_response)  # Diagnóstico: Imprime a estrutura do JSON
+        # Diagnóstico para verificar a estrutura de um item
+        if json_response.get('resultado'):
+            st.write("Exemplo de item:", json_response['resultado'][0])
+        
         itens = json_response.get('resultado', [])
+        # Supondo que cada item na lista 'resultado' tenha as chaves corretas
+        # Este código precisa ser ajustado com base na estrutura real do item
         return [(item.get('codigoItem', 'Código não disponível'), 
                  f"{item.get('descricao', 'Descrição não disponível')} (código: {item.get('codigoItem', 'n/a')})") for item in itens]
     else:
