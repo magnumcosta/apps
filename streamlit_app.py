@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-
+from datetime import date
 
 # Função para formatar preço em reais
 def formatar_preco_reais(valor):
@@ -55,7 +55,7 @@ if itens:
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         # "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "Data do resultado": item.get('dataResultado', 'Data não disponível')
+        "Data do resultado": item.get(date.'dataResultado', 'Data não disponível')
     } for item in itens]
     st.table(tabela_itens)
     
