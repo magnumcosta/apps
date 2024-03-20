@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-import datetime
+
 
 # Função para formatar preço em reais
 def formatar_preco_reais(valor):
@@ -8,18 +8,6 @@ def formatar_preco_reais(valor):
         return 'Preço não disponível'
     else:
         return f'R$ {valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
-
-def formatar_data(data_string):
-    if data_string is None:
-        return 'Data não disponível'
-    try:
-        # Ajustando para o formato com milissegundos e fuso horário
-        data_obj = datetime.strptime(data_string, '%Y-%m-%dT%H:%M:%S.%f%z')
-        # Formatar para o fuso horário local ou manter em UTC, dependendo da necessidade
-        # Aqui estamos convertendo para o formato de data desejado sem modificar o fuso horário
-        return data_obj.strftime('%d/%m/%Y')
-    except ValueError:
-        return 'Formato de data inválido'
 
 
 # URLs atualizadas
@@ -65,8 +53,7 @@ if itens:
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "teste": item.get('dataResultado'),
-        "Data do resultado": formatar_data(item.get('dataResultado'))
+        "Data do resultado": item.get('dataResultado')
     } for item in itens]
     st.table(tabela_itens)
     
