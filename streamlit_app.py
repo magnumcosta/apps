@@ -40,7 +40,12 @@ itens, total_registros = obter_itens(tipo_item, codigo_item_catalogo, pagina_atu
 
 if itens:
     # Mostrar os itens em formato de tabela
-    tabela_itens = [{"Código": item.get('codigoItemCatalogo', 'Código não disponível'), "Descrição": item.get('descricaoItem', 'Descrição não disponível'), "Data do resultado": item.get('dataResultado', 'Data não disponível')} for item in itens]
+    tabela_itens = [{
+        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
+        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
+        "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
+        "Data do resultado": item.get('dataResultado', 'Data não disponível')
+    } for item in itens]
     st.table(tabela_itens)
     
     # Paginação
