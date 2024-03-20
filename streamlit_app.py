@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from datetime import datetime
+import datetime
 
 # Função para formatar preço em reais
 def formatar_preco_reais(valor):
@@ -13,7 +13,7 @@ def formatar_data(data_string):
     if data_string is None:
         return 'Data não disponível'
     try:
-        data_obj = datetime.strptime(data_string, '%Y-%m-%dT%H:%M:%SZ')
+        data_obj = datetime.datetime.strptime(data_string, '%Y-%m-%dT%H:%M:%SZ')
         return data_obj.strftime('%d/%m/%Y')
     except ValueError:
         return 'Formato de data inválido'
