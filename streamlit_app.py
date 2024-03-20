@@ -13,7 +13,10 @@ def formatar_data(data_string):
     if data_string is None:
         return 'Data não disponível'
     try:
-        data_obj = datetime.datetime.strptime(data_string, '%Y-%m-%dT%H:%M:%SZ')
+        # Ajustando para o formato com milissegundos e fuso horário
+        data_obj = datetime.strptime(data_string, '%Y-%m-%dT%H:%M:%S.%f%z')
+        # Formatar para o fuso horário local ou manter em UTC, dependendo da necessidade
+        # Aqui estamos convertendo para o formato de data desejado sem modificar o fuso horário
         return data_obj.strftime('%d/%m/%Y')
     except ValueError:
         return 'Formato de data inválido'
