@@ -1,16 +1,14 @@
 import streamlit as st
 import requests
-import locale
 
-# Tente configurar o locale para pt_BR
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-except locale.Error:
-    try:
-        # Tenta um fallback para outra variação comum se a primeira falhar
-        locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
-    except locale.Error:
-        st.error("Locale pt_BR não pôde ser configurado.")
+
+# Função para formatar preço em reais
+def formatar_preco_reais(valor):
+    if valor is None:
+        return 'Preço não disponível'
+    else:
+        return f'R$ {valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+
 
 
 # URLs atualizadas
@@ -55,8 +53,8 @@ if itens:
     tabela_itens = [{
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
-        "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
-        "Preço Unit.": locale.currency(item.get('precoUnitario', 0), grouping=True) if item.get('precoUnitario') else 'Preço não disponível',
+        # "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
+        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
         "Data do resultado": item.get('dataResultado', 'Data não disponível')
     } for item in itens]
     st.table(tabela_itens)
