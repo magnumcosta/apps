@@ -68,5 +68,32 @@ if itens:
     ax2 = ax1.twinx()
     agrupado.plot(kind='bar', x='Mes/Ano', y='Total_Registros', ax=ax1, position=0, color='skyblue', figsize=(10, 6))
     agrupado.plot(kind='line', x='Mes/Ano', y='Media_Precos', ax=ax2, color='darkred', marker='o')
-    ax1.set_ylabel('Total de
+       ax1.set_ylabel('Total de Registros', color='skyblue')
+    ax2.set_ylabel('Média dos Preços', color='darkred')
+    ax1.tick_params(axis='y', colors='skyblue')
+    ax2.tick_params(axis='y', colors='darkred')
+    plt.title('Total de Registros e Média dos Preços por Mês/Ano')
+    st.pyplot(fig)
+
+    # Mostrar os itens em formato de tabela
+    tabela_itens = [{
+        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
+        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
+        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
+        "Data do resultado": item.get('dataResultado')
+    } for item in itens]
+    st.table(tabela_itens)
+    
+    # Paginação
+    if st.button('Anterior', key='btn_anterior'):
+        if st.session_state['pagina_atual'] > 1:
+            st.session_state['pagina_atual'] -= 1
+            st.experimental_rerun()
+    if st.button('Próximo', key='btn_proximo'):
+        if pagina_atual * 10 < total_registros:
+            st.session_state['pagina_atual'] += 1
+            st.experimental_rerun()
+else:
+    st.error("Nenhum item encontrado ou erro na consulta.")
+
 
