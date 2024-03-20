@@ -9,6 +9,17 @@ def formatar_preco_reais(valor):
     else:
         return f'R$ {valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
 
+# Função para formatar a data
+def formatar_data(data_string):
+    if data_string is None:
+        return 'Data não disponível'
+    try:
+        # Converte de ISO 8601 para objeto datetime
+        data_obj = datetime.strptime(data_string, '%Y-%m-%dT%H:%M:%SZ')
+        # Formata para o padrão desejado, exemplo: "20/03/2023"
+        return data_obj.strftime('%d/%m/%Y')
+    except ValueError:
+        return 'Formato de data inválido'
 
 
 # URLs atualizadas
@@ -55,7 +66,7 @@ if itens:
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         # "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "Data do resultado": date.(item.get('dataResultado'))
+        "Data do resultado": formatar_data(item.get('dataResultado'))
     } for item in itens]
     st.table(tabela_itens)
     
