@@ -18,7 +18,7 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
     url = consultarItemMaterial_base_url if tipo_item == 'Material' else consultarItemServico_base_url
     params = {
         'pagina': pagina,
-        'tamanhoPagina': 10,  # Modificado para 10 registros por página
+        'tamanhoPagina': 5,  # Modificado para 10 registros por página
         'codigoItemCatalogo': codigo_item_catalogo
     }
 
@@ -62,7 +62,7 @@ if itens:
         if st.session_state['pagina_atual'] > 1:
             st.session_state['pagina_atual'] -= 1
     if st.button('Próximo', key='btn_proximo'):
-        if pagina_atual * 10 < total_registros:
+        if pagina_atual * 5 < total_registros:
             st.session_state['pagina_atual'] += 1
 else:
     st.error("Nenhum item encontrado ou erro na consulta.")
