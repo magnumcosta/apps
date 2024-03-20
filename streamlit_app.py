@@ -64,7 +64,6 @@ if itens:
     tabela_itens = [{
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
-        # "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
         "Data do resultado": formatar_data(item.get('dataResultado'))
     } for item in itens]
