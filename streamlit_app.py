@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
-import pandas as pd
-import matplotlib.pyplot as plt
+from collections import defaultdict
 from datetime import datetime
 
 # Função para formatar preço em reais
@@ -32,68 +31,31 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
         st.error(f"Erro na consulta: {response.status_code}")
         return [], 0
 
-# Inicialização das variáveis de sessão para controle da paginação
-if 'pagina_atual' not in st.session_state:
-    st.session_state['pagina_atual'] = 1
-
 # Streamlit UI
 st.title("Consulta de Itens de Material e Serviço")
 
-tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
-codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="267666", key='codigo_item_catalogo')
+tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'])
+codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="267666")
 
-if st.button('Consultar', key='btn_consultar'):
-    st.session_state['pagina_atual'] = 1
+if st.button('Consultar'):
+    itens, total_registros = obter_itens(tipo_item, codigo_item_catalogo, 1)
+    if itens:
+        st.write(f"Total de registros encontrados: {total_registros}")
+        
+        # Processamento dos dados para cálculo da média de preços por mês/ano
+        precos_por_mes = defaultdict(list)
+        for item in itens:
+            data = item.get('dataResultado', '1900-01-01')
+            preco = item.get('precoUnitario', 0)
+            mes_ano = datetime.strptime(data, "%Y-%m-%d").strftime("%m/%Y")
+            precos_por_mes[mes_ano].append(float(preco))
+        
+        # Exibição dos dados processados
+        for mes_ano, precos in precos_por_mes.items():
+            media_preco = sum(precos) / len(precos)
+            st.write(f"{mes_ano}: Média de Preços = {formatar_preco_reais(media_preco)}, Total de Registros = {len(precos)}")
+    else:
+        st.error("Nenhum item encontrado ou erro na consulta.")
 
-pagina_atual = st.session_state['pagina_atual']
-itens, total_registros = obter_itens(tipo_item, codigo_item_catalogo, pagina_atual)
-
-if itens:
-    st.write(f"Total de registros encontrados: {total_registros}")
-
-    # Processamento para gráfico
-    data = []
-    for item in itens:
-        preco = item.get('precoUnitario')
-        data_resultado = item.get('dataResultado', '1900-01-01')
-        mes_ano = datetime.strptime(data_resultado, "%Y-%m-%d").strftime("%m/%Y")
-        data.append({"Mes/Ano": mes_ano, "Preço": preco})
-
-    df = pd.DataFrame(data)
-    df['Preço'] = pd.to_numeric(df['Preço'], errors='coerce')
-    agrupado = df.groupby('Mes/Ano').agg(Total_Registros=('Mes/Ano', 'count'), Media_Precos=('Preço', 'mean')).reset_index()
-
-    # Plot
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    agrupado.plot(kind='bar', x='Mes/Ano', y='Total_Registros', ax=ax1, position=0, color='skyblue', figsize=(10, 6))
-    agrupado.plot(kind='line', x='Mes/Ano', y='Media_Precos', ax=ax2, color='darkred', marker='o')
-    ax1.set_ylabel('Total de Registros', color='skyblue')
-    ax2.set_ylabel('Média dos Preços', color='darkred')
-    ax1.tick_params(axis='y', colors='skyblue')
-    ax2.tick_params(axis='y', colors='darkred')
-    plt.title('Total de Registros e Média dos Preços por Mês/Ano')
-    st.pyplot(fig)
-
-    # Mostrar os itens em formato de tabela
-    tabela_itens = [{
-        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
-        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
-        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "Data do resultado": item.get('dataResultado')
-    } for item in itens]
-    st.table(tabela_itens)
-    
-    # Paginação
-    if st.button('Anterior', key='btn_anterior'):
-        if st.session_state['pagina_atual'] > 1:
-            st.session_state['pagina_atual'] -= 1
-            st.experimental_rerun()
-    if st.button('Próximo', key='btn_proximo'):
-        if pagina_atual * 10 < total_registros:
-            st.session_state['pagina_atual'] += 1
-            st.experimental_rerun()
-else:
-    st.error("Nenhum item encontrado ou erro na consulta.")
 
 
