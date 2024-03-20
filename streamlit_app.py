@@ -1,5 +1,17 @@
 import streamlit as st
 import requests
+import locale
+
+# Tente configurar o locale para pt_BR
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except locale.Error:
+    try:
+        # Tenta um fallback para outra variação comum se a primeira falhar
+        locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+    except locale.Error:
+        st.error("Locale pt_BR não pôde ser configurado.")
+
 
 # URLs atualizadas
 consultarItemMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-pesquisa-preco/1_consultarMaterial'
@@ -44,6 +56,7 @@ if itens:
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         "Preço Unit.": item.get('precoUnitario', 'Preço não disponível'), 
+        "Preço Unit.": locale.currency(item.get('precoUnitario', 0), grouping=True) if item.get('precoUnitario') else 'Preço não disponível',
         "Data do resultado": item.get('dataResultado', 'Data não disponível')
     } for item in itens]
     st.table(tabela_itens)
