@@ -62,6 +62,7 @@ if itens:
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
+        "teste": item.get('dataResultado'),
         "Data do resultado": formatar_data(item.get('dataResultado'))
     } for item in itens]
     st.table(tabela_itens)
