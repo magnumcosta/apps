@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
-from collections import defaultdict
-from datetime import datetime
+
 
 # Função para formatar preço em reais
 def formatar_preco_reais(valor):
@@ -9,6 +8,7 @@ def formatar_preco_reais(valor):
         return 'Preço não disponível'
     else:
         return f'R$ {valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+
 
 # URLs atualizadas
 consultarItemMaterial_base_url = 'https://dadosabertos.compras.gov.br/modulo-pesquisa-preco/1_consultarMaterial'
@@ -18,7 +18,7 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
     url = consultarItemMaterial_base_url if tipo_item == 'Material' else consultarItemServico_base_url
     params = {
         'pagina': pagina,
-        'tamanhoPagina': 10,
+        'tamanhoPagina': 10,  # Modificado para 10 registros por página
         'codigoItemCatalogo': codigo_item_catalogo
     }
 
@@ -26,36 +26,51 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
     if response.status_code == 200:
         json_response = response.json()
         itens = json_response.get('resultado', [])
-        return itens, json_response.get('totalRegistros', 0)
+        return itens, json_response.get('totalRegistros', 0)  # Retornar também o total de registros
     else:
         st.error(f"Erro na consulta: {response.status_code}")
         return [], 0
 
+# Inicialização das variáveis de sessão para controle da paginação
+if 'pagina_atual' not in st.session_state:
+    st.session_state['pagina_atual'] = 1
+
 # Streamlit UI
 st.title("Consulta de Itens de Material e Serviço")
 
-tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'])
-codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="267666")
+tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
+codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="267666", key='codigo_item_catalogo')
+
+if st.button('Consultar', key='btn_consultar'):
+    st.session_state['pagina_atual'] = 1  # Resetar a paginação ao fazer uma nova consulta
 
 if st.button('Consultar'):
     itens, total_registros = obter_itens(tipo_item, codigo_item_catalogo, 1)
     if itens:
         st.write(f"Total de registros encontrados: {total_registros}")
-        
-        # Processamento dos dados para cálculo da média de preços por mês/ano
-        precos_por_mes = defaultdict(list)
-        for item in itens:
-            data = item.get('dataResultado', '1900-01-01')
-            preco = item.get('precoUnitario', 0)
-            mes_ano = datetime.strptime(data, "%Y-%m-%d").strftime("%m/%Y")
-            precos_por_mes[mes_ano].append(float(preco))
-        
-        # Exibição dos dados processados
-        for mes_ano, precos in precos_por_mes.items():
-            media_preco = sum(precos) / len(precos)
-            st.write(f"{mes_ano}: Média de Preços = {formatar_preco_reais(media_preco)}, Total de Registros = {len(precos)}")
-    else:
-        st.error("Nenhum item encontrado ou erro na consulta.")
+
+pagina_atual = st.session_state['pagina_atual']
+itens, total_registros = obter_itens(tipo_item, codigo_item_catalogo, pagina_atual)
+
+if itens:
+    # Mostrar os itens em formato de tabela
+    tabela_itens = [{
+        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
+        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
+        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
+        "Data do resultado": item.get('dataResultado')
+    } for item in itens]
+    st.table(tabela_itens)
+    
+    # Paginação
+    if st.button('Anterior', key='btn_anterior'):
+        if st.session_state['pagina_atual'] > 1:
+            st.session_state['pagina_atual'] -= 1
+    if st.button('Próximo', key='btn_proximo'):
+        if pagina_atual * 10 < total_registros:
+            st.session_state['pagina_atual'] += 1
+else:
+    st.error("Nenhum item encontrado ou erro na consulta.")
 
 
 
