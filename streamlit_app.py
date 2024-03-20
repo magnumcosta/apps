@@ -41,8 +41,7 @@ st.title("Consulta de Itens de Material e Serviço")
 tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
 codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="267666", key='codigo_item_catalogo')
 
-if st.button('Consultar', key='btn_consultar'):
-    st.session_state['pagina_atual'] = 1  # Resetar a paginação ao fazer uma nova consulta
+
     
 if st.button('Consultar'):    
     itens, total_registros = obter_itens(tipo_item, codigo_item_catalogo, 1)
