@@ -48,10 +48,6 @@ if st.button('Consultar'):
         itens, paginas_restantes = obter_itens(tipo_item, codigo_item_catalogo, pagina)
         st.session_state['itens'] = itens
         st.session_state['paginas_restantes'] = paginas_restantes
-        if paginas_restantes > 0:
-            # Incrementa a página para a próxima consulta
-            pagina += 1
-            st.number_input("Indique a página para consulta", min_value=1, value=pagina, step=1)
     else:
         st.warning("Por favor, informe o código do item de catálogo para realizar a consulta.")
 
@@ -65,3 +61,19 @@ if st.session_state.get('itens'):
     } for item in st.session_state['itens'][:10]]  # Limita a exibição a 10 itens
     df_tabela = pd.DataFrame(tabela_itens)
     st.table(df_tabela)
+
+    # Opção para download dos dados contendo todos os itens retornados na consulta
+    df_completo = pd.DataFrame([{
+        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
+        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
+        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
+        "Data do resultado": item.get('dataResultado')
+    } for item in st.session_state['itens']])
+    csv = df_completo.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download dos dados em CSV",
+        data=csv,
+        file_name='dados_consulta.csv',
+        mime='text/csv',
+    )
+
