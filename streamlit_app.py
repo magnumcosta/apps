@@ -70,7 +70,13 @@ if st.session_state.get('itens'):
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "
+        "Data do resultado": item.get('dataResultado')
+    } for item in st.session_state['itens']])
+    csv = df_completo.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download dos dados em CSV",
+        data=csv,
+        file_name
 
        
 
