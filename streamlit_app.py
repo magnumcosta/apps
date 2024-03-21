@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 
 # Função para formatar preço em reais
 def formatar_preco_reais(valor):
@@ -16,7 +17,7 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
     url = consultarItemMaterial_base_url if tipo_item == 'Material' else consultarItemServico_base_url
     params = {
         'pagina': pagina,
-        'tamanhoPagina': 10,
+        'tamanhoPagina': 500,  # Ajuste para 500 itens por página
         'codigoItemCatalogo': codigo_item_catalogo
     }
     response = requests.get(url, params=params)
@@ -28,25 +29,22 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
         st.error(f"Erro na consulta: {response.status_code}")
         return [], 0
 
-# Inicialização das variáveis de sessão para controle da paginação e dos dados
-if 'pagina_atual' not in st.session_state:
-    st.session_state['pagina_atual'] = 1
-if 'itens' not in st.session_state:
-    st.session_state['itens'] = []
-if 'total_registros' not in st.session_state:
-    st.session_state['total_registros'] = 0
-
 # Streamlit UI
 st.title("Consulta de Itens de Material e Serviço")
 
+# Disclaimer
+st.markdown("""
+**Disclaimer:** tetetetetettetettttsssssssssssssssss
+""")
+
 tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
-codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="267666", key='codigo_item_catalogo')
+codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
+pagina = st.number_input("Indique a página para consulta", min_value=1, value=1, step=1)
 
 if st.button('Consultar'):
-    st.session_state['pagina_atual'] = 1
-    st.session_state['itens'], st.session_state['total_registros'] = obter_itens(tipo_item, codigo_item_catalogo, st.session_state['pagina_atual'])
+    st.session_state['itens'], st.session_state['total_registros'] = obter_itens(tipo_item, codigo_item_catalogo, pagina)
 
-if st.session_state['itens']:
+if st.session_state.get('itens'):
     st.write(f"Total de registros encontrados: {st.session_state['total_registros']}")
     # Mostrar os itens em formato de tabela
     tabela_itens = [{
@@ -55,13 +53,14 @@ if st.session_state['itens']:
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
         "Data do resultado": item.get('dataResultado')
     } for item in st.session_state['itens']]
-    st.table(tabela_itens)
+    df = pd.DataFrame(tabela_itens)
+    st.table(df)
 
-    # Paginação
-    if st.button('Anterior', key='btn_anterior'):
-        if st.session_state['pagina_atual'] > 1:
-            st.session_state['pagina_atual'] -= 1
-            st.session_state['itens'], st.session_state['total_registros'] = obter_itens(tipo_item, codigo_item_catalogo, st.session_state['pagina_atual'])
-    if st.button('Próximo', key='btn_proximo'):
-        if st.session_state['pagina_atual'] * 10 < st.session_state['total_registros']:
-            st.session
+    # Opção para download dos dados
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download dos dados em CSV",
+        data=csv,
+        file_name='dados_consulta.csv',
+        mime='text/csv',
+    )
