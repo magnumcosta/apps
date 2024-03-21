@@ -64,7 +64,7 @@ if st.session_state.get('itens'):
             # Apply formatting
             df_completo = df_completo.applymap(lambda x: formatar_preco_reais(x) if isinstance(x, float) else x)
             
-            csv = df_completo.to_csv(sep=';', index=False).encode('utf-8')
+            csv = df_completo.to_csv(sep=';', index=False)
             st.download_button(
                 label="Download dos dados em CSV",
                 data=csv,
