@@ -34,9 +34,7 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
 st.title("Consulta de Itens de Material e Serviço")
 
 # Disclaimer
-st.markdown("""
-**Disclaimer:** tetetetetettetettttsssssssssssssssss
-""")
+st.markdown("**Disclaimer:** tetetetetettetettttsssssssssssssssss")
 
 tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
 codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
@@ -61,7 +59,7 @@ if st.session_state.get('itens'):
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
         "Data do resultado": item.get('dataResultado')
-    } for item in st.session_state['itens'][:10]]  # Limita a exibição a 10 itens
+    } for item in st.session_state['itens'][:10]]
     df_tabela = pd.DataFrame(tabela_itens)
     st.table(df_tabela)
 
@@ -76,4 +74,6 @@ if st.session_state.get('itens'):
     st.download_button(
         label="Download dos dados em CSV",
         data=csv,
-        file_name
+        file_name='dados_consulta.csv',
+        mime='text/csv',
+    )
