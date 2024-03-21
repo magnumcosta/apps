@@ -47,7 +47,10 @@ if st.button('Consultar'):
     if codigo_item_catalogo:  # Verifica se o código do item de catálogo não está vazio
         itens, paginas_restantes = obter_itens(tipo_item, codigo_item_catalogo, pagina)
         st.session_state['itens'] = itens
+        # Atualiza a informação de páginas restantes no estado da sessão
         st.session_state['paginas_restantes'] = paginas_restantes
+        # Exibe o número de páginas restantes
+        st.write(f"Páginas restantes: {paginas_restantes}")
     else:
         st.warning("Por favor, informe o código do item de catálogo para realizar a consulta.")
 
@@ -74,6 +77,5 @@ if st.session_state.get('itens'):
         label="Download dos dados em CSV",
         data=csv,
         file_name='dados_consulta.csv',
-        mime='text/csv',
-    )
+       
 
