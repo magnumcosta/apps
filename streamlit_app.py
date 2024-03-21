@@ -24,7 +24,8 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
     if response.status_code == 200:
         json_response = response.json()
         itens = json_response.get('resultado', [])
-        return itens, json_response.get('totalRegistros', 0)
+        paginas_restantes = json_response.get('paginasRestantes', 0)
+        return itens, paginas_restantes
     else:
         st.error(f"Erro na consulta: {response.status_code}")
         return [], 0
@@ -41,26 +42,26 @@ tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 
 codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
 pagina = st.number_input("Indique a página para consulta", min_value=1, value=1, step=1)
 
+# Verifica se o código do item de catálogo foi fornecido antes de permitir a consulta
 if st.button('Consultar'):
-    st.session_state['itens'], st.session_state['total_registros'] = obter_itens(tipo_item, codigo_item_catalogo, pagina)
+    if codigo_item_catalogo:  # Verifica se o código do item de catálogo não está vazio
+        itens, paginas_restantes = obter_itens(tipo_item, codigo_item_catalogo, pagina)
+        st.session_state['itens'] = itens
+        st.session_state['paginas_restantes'] = paginas_restantes
+        if paginas_restantes > 0:
+            # Incrementa a página para a próxima consulta
+            pagina += 1
+            st.number_input("Indique a página para consulta", min_value=1, value=pagina, step=1)
+    else:
+        st.warning("Por favor, informe o código do item de catálogo para realizar a consulta.")
 
 if st.session_state.get('itens'):
-    st.write(f"Total de registros encontrados: {st.session_state['total_registros']}")
-    # Mostrar os itens em formato de tabela
+    # Mostrar apenas os 10 primeiros itens em formato de tabela
     tabela_itens = [{
         "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
         "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
         "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
         "Data do resultado": item.get('dataResultado')
-    } for item in st.session_state['itens']]
-    df = pd.DataFrame(tabela_itens)
-    st.table(df)
-
-    # Opção para download dos dados
-    csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="Download dos dados em CSV",
-        data=csv,
-        file_name='dados_consulta.csv',
-        mime='text/csv',
-    )
+    } for item in st.session_state['itens'][:10]]  # Limita a exibição a 10 itens
+    df_tabela = pd.DataFrame(tabela_itens)
+    st.table(df_tabela)
