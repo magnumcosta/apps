@@ -63,14 +63,11 @@ if st.session_state.get('itens'):
     df_tabela = pd.DataFrame(tabela_itens)
     st.table(df_tabela)
 
-    # Opção para download dos dados contendo todos os itens retornados na consulta
-    df_completo = pd.DataFrame([{
-        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
-        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
-        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "Data do resultado": item.get('dataResultado')
-    } for item in st.session_state['itens']])
-    csv = df_completo.to_csv(sep=';',index=False).encode('utf-8')
+     # Adaptação para usar todos os campos disponíveis
+    df_completo = pd.json_normalize(itens)  # Isto transformará todos os campos em colunas
+    df_completo = df_completo.applymap(lambda x: formatar_preco_reais(x) if isinstance(x, float) else x)  # Formatando preços
+
+    csv = df_completo.to_csv(sep=';', index=False).encode('utf-8')
     st.download_button(
         label="Download dos dados em CSV",
         data=csv,
