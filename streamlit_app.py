@@ -22,55 +22,24 @@ def obter_itens(tipo_item, codigo_item_catalogo, pagina):
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
-        json_response = response.json()
-        itens = json_response.get('resultado', [])
-        paginas_restantes = json_response.get('paginasRestantes', 0)
-        return itens, paginas_restantes
+        return response.json()  # Retorna a resposta completa
     else:
         st.error(f"Erro na consulta: {response.status_code}")
-        return [], 0
+        return {"resultado": [], "paginasRestantes": 0}
 
-# Streamlit UI
-st.title("Consulta de Itens de Material e Serviço")
+# Streamlit UI (mantenha como está, até a parte da consulta)
 
-# Disclaimer
-st.markdown("**Disclaimer:** tetetetetettetettttsssssssssssssssss")
-
-tipo_item = st.selectbox("Selecione o tipo de item para consulta", ['Material', 'Serviço'], key='tipo_item')
-codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
-pagina = st.number_input("Indique a página para consulta", min_value=1, value=1, step=1)
-
-# Verifica se o código do item de catálogo foi fornecido antes de permitir a consulta
-if st.button('Consultar'):
-    if codigo_item_catalogo:  # Verifica se o código do item de catálogo não está vazio
-        itens, paginas_restantes = obter_itens(tipo_item, codigo_item_catalogo, pagina)
-        st.session_state['itens'] = itens
-        # Atualiza a informação de páginas restantes no estado da sessão
-        st.session_state['paginas_restantes'] = paginas_restantes
-        # Exibe o número de páginas restantes
-        st.write(f"Páginas restantes: {paginas_restantes}")
-    else:
-        st.warning("Por favor, informe o código do item de catálogo para realizar a consulta.")
-
+# Quando preparar o DataFrame para download:
 if st.session_state.get('itens'):
-    # Mostrar apenas os 10 primeiros itens em formato de tabela
-    tabela_itens = [{
-        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
-        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
-        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "Data do resultado": item.get('dataResultado')
-    } for item in st.session_state['itens'][:10]]
-    df_tabela = pd.DataFrame(tabela_itens)
-    st.table(df_tabela)
+    # Supondo que `st.session_state['itens']` agora tenha a resposta completa
+    json_response = st.session_state['itens']
+    itens = json_response.get('resultado', [])
 
-    # Opção para download dos dados contendo todos os itens retornados na consulta
-    df_completo = pd.DataFrame([{
-        "Código": item.get('codigoItemCatalogo', 'Código não disponível'), 
-        "Descrição": item.get('descricaoItem', 'Descrição não disponível'), 
-        "Preço Unit.": formatar_preco_reais(item.get('precoUnitario')),
-        "Data do resultado": item.get('dataResultado')
-    } for item in st.session_state['itens']])
-    csv = df_completo.to_csv(index=False).encode('utf-8')
+    # Adaptação para usar todos os campos disponíveis
+    df_completo = pd.json_normalize(itens)  # Isto transformará todos os campos em colunas
+    df_completo = df_completo.applymap(lambda x: formatar_preco_reais(x) if isinstance(x, float) else x)  # Formatando preços
+
+    csv = df_completo.to_csv(sep=';', index=False).encode('utf-8')
     st.download_button(
         label="Download dos dados em CSV",
         data=csv,
