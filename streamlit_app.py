@@ -77,6 +77,3 @@ if st.session_state.get('itens'):
         label="Download dos dados em CSV",
         data=csv,
         file_name
-
-       
-
