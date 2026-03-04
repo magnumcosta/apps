@@ -1,44 +1,4 @@
-# =============================================================================
-# Dependências diretas
-# =============================================================================
+# Dependências diretas do projeto
 streamlit==1.55.0
 pandas==2.3.3
 requests==2.32.5
-
-# =============================================================================
-# Dependências transitivas (gerado via pip freeze)
-# =============================================================================
-altair==6.0.0
-attrs==25.4.0
-blinker==1.9.0
-cachetools==7.0.2
-certifi==2026.2.25
-charset-normalizer==3.4.4
-click==8.3.1
-gitdb==4.0.12
-GitPython==3.1.46
-idna==3.11
-Jinja2==3.1.6
-jsonschema==4.26.0
-jsonschema-specifications==2025.9.1
-MarkupSafe==3.0.3
-narwhals==2.17.0
-numpy==2.4.2
-packaging==26.0
-pillow==12.1.1
-protobuf==6.33.5
-pyarrow==23.0.1
-pydeck==0.9.1
-python-dateutil==2.9.0.post0
-pytz==2026.1.post1
-referencing==0.37.0
-rpds-py==0.30.0
-six==1.17.0
-smmap==5.0.2
-tenacity==9.1.4
-toml==0.10.2
-tornado==6.5.4
-typing_extensions==4.15.0
-tzdata==2025.3
-urllib3==2.6.3
-watchdog==6.0.0
