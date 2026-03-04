@@ -154,7 +154,7 @@ if st.session_state.get('itens'):
                 f"Total de páginas: {st.session_state['total_paginas']} | "
                 f"Páginas restantes: {st.session_state['paginas_restantes']}"
             )
-            st.dataframe(df_exibicao, use_container_width=True)
+            st.dataframe(df_exibicao, width='stretch')
 
             csv = df_csv.to_csv(sep=';', index=False).encode('utf-8-sig')
             st.download_button(
