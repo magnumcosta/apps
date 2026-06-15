@@ -103,13 +103,25 @@ st.markdown(
 
 st.divider()
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     tipo_item = st.selectbox("Tipo de item", ['Material', 'Serviço'], key='tipo_item')
     codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
 with col2:
     pagina = st.number_input("Página", min_value=1, value=1, step=1)
     tamanho_pagina = st.number_input("Itens por página", min_value=10, value=500, step=10)
+with col3:
+    usar_filtro_data = st.checkbox("Filtrar por data da compra", value=False)
+    
+    # Calcula dinamicamente um ano antes do momento atual em que a página é carregada
+    data_padrao_um_ano_atras = (pd.Timestamp.today() - pd.DateOffset(years=1)).date()
+    
+    data_minima = st.date_input(
+        "A partir de", 
+        value=data_padrao_um_ano_atras, 
+        format="DD/MM/YYYY",  # Aplica a formatação desejada (DD/MM/YYYY)
+        disabled=not usar_filtro_data
+    )
 
 if st.button('Consultar', type='primary'):
     # Limpa resultado anterior a cada nova consulta
@@ -139,31 +151,53 @@ if st.session_state.get('itens'):
         if isinstance(itens, list) and all(isinstance(item, dict) for item in itens):
             df_completo = pd.json_normalize(itens)
 
-            # DataFrame de exibição: formata preços com ponto de milhar e vírgula decimal
-            df_exibicao = df_completo.map(
-                lambda x: formatar_preco_reais(x) if isinstance(x, float) else x
-            )
-            df_exibicao = df_exibicao.rename(columns=RENOMEAR_COLUNAS)
+            # Aplicação do filtro de data (processado após a obtenção dos dados)
+            if usar_filtro_data and 'dataCompra' in df_completo.columns:
+                # Converte coluna para datetime (seguro para fuso horário com utc=True e tz_convert)
+                df_completo['data_compra_dt'] = pd.to_datetime(
+                    df_completo['dataCompra'], errors='coerce', utc=True
+                ).dt.tz_convert(None)
+                
+                data_limite_dt = pd.to_datetime(data_minima)
+                
+                # Filtra mantendo apenas registros maiores ou iguais à data estipulada
+                df_completo = df_completo[df_completo['data_compra_dt'] >= data_limite_dt]
+                
+                # Descarta a coluna temporária de data para manter o dataframe original
+                df_completo = df_completo.drop(columns=['data_compra_dt'])
 
-            # DataFrame de exportação: números com vírgula decimal, sem ponto de milhar
-            # Encoding utf-8-sig (BOM) garante leitura correta no Excel do Windows
-            df_csv = df_completo.map(float_para_csv)
-            df_csv = df_csv.rename(columns=RENOMEAR_COLUNAS)
+            # Verifica se restaram registros após o filtro ou se a API retornou vazia
+            if df_completo.empty:
+                if usar_filtro_data:
+                    st.warning("Nenhum item encontrado que atenda ao filtro de data nesta página.")
+                else:
+                    st.warning("Nenhum item encontrado nesta página.")
+            else:
+                # DataFrame de exibição: formata preços com ponto de milhar e vírgula decimal
+                df_exibicao = df_completo.map(
+                    lambda x: formatar_preco_reais(x) if isinstance(x, float) else x
+                )
+                df_exibicao = df_exibicao.rename(columns=RENOMEAR_COLUNAS)
 
-            st.success(
-                f"Total de páginas: {st.session_state['total_paginas']} | "
-                f"Páginas restantes: {st.session_state['paginas_restantes']}"
-            )
-            st.dataframe(df_exibicao)
+                # DataFrame de exportação: números com vírgula decimal, sem ponto de milhar
+                # Encoding utf-8-sig (BOM) garante leitura correta no Excel do Windows
+                df_csv = df_completo.map(float_para_csv)
+                df_csv = df_csv.rename(columns=RENOMEAR_COLUNAS)
 
-            csv = df_csv.to_csv(sep=';', index=False).encode('utf-8-sig')
-            st.download_button(
-                label="Download dos dados em CSV",
-                data=csv,
-                file_name='dados_consulta.csv',
-                mime='text/csv',
-                type='secondary',
-            )
+                st.success(
+                    f"Total de páginas: {st.session_state['total_paginas']} | "
+                    f"Páginas restantes: {st.session_state['paginas_restantes']}"
+                )
+                st.dataframe(df_exibicao)
+
+                csv = df_csv.to_csv(sep=';', index=False).encode('utf-8-sig')
+                st.download_button(
+                    label="Download dos dados em CSV",
+                    data=csv,
+                    file_name='dados_consulta.csv',
+                    mime='text/csv',
+                    type='secondary',
+                )
         else:
             st.error("Formato dos itens inválido para normalização.")
     except Exception as e:

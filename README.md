@@ -36,7 +36,7 @@ Esta ferramenta acessa a **API de Dados Abertos do Compras.gov.br** e permite qu
 
 ### 1. Clonar o repositório
 ```bash
-git clone https://github.com/magnumcosta/apps.git
+git clone https://github.com/geazzy/apps.git
 cd apps
 ```
 
@@ -70,7 +70,7 @@ deactivate
 
 Acesse diretamente pelo navegador, sem necessidade de instalação:
 
-**[https://suportedadoslivres.streamlit.app/](https://suportedadoslivres.streamlit.app/)**
+**[https://pesquisadepreco.streamlit.app/](https://pesquisadepreco.streamlit.app/)**
 
 ### Local
 
