@@ -65,14 +65,23 @@ RENOMEAR_COLUNAS = {
 }
 
 
+def montar_params(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina):
+    """Monta os parâmetros de query conforme o contrato de cada endpoint.
+
+    O endpoint de Material passou a exigir o par tipo/codigo (mudança de
+    contrato do provedor da API). O endpoint de Serviço não mudou e continua
+    usando codigoItemCatalogo diretamente.
+    """
+    base = {'pagina': pagina, 'tamanhoPagina': tamanho_pagina}
+    if tipo_item == 'Material':
+        return {**base, 'tipo': 'codigoItemCatalogo', 'codigo': codigo_item_catalogo}
+    return {**base, 'codigoItemCatalogo': codigo_item_catalogo}
+
+
 def obter_itens(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina):
     """Consulta a API do Compras.gov.br e retorna os itens encontrados."""
     url = CONSULTAR_MATERIAL_URL if tipo_item == 'Material' else CONSULTAR_SERVICO_URL
-    params = {
-        'pagina': pagina,
-        'tamanhoPagina': tamanho_pagina,
-        'codigoItemCatalogo': codigo_item_catalogo
-    }
+    params = montar_params(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina)
     try:
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
@@ -109,7 +118,7 @@ with col1:
     codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
 with col2:
     pagina = st.number_input("Página", min_value=1, value=1, step=1)
-    tamanho_pagina = st.number_input("Itens por página", min_value=10, value=500, step=10)
+    tamanho_pagina = st.number_input("Itens por página", min_value=10, max_value=500, value=500, step=10)
 
 if st.button('Consultar', type='primary'):
     # Limpa resultado anterior a cada nova consulta
