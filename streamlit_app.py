@@ -65,14 +65,27 @@ RENOMEAR_COLUNAS = {
 }
 
 
-def obter_itens(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina):
-    """Consulta a API do Compras.gov.br e retorna os itens encontrados."""
-    url = CONSULTAR_MATERIAL_URL if tipo_item == 'Material' else CONSULTAR_SERVICO_URL
+def montar_params(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina):
+    """Monta a query conforme o contrato de cada endpoint.
+
+    Material exige tipo + codigo. Serviço continua com codigoItemCatalogo.
+    """
     params = {
         'pagina': pagina,
         'tamanhoPagina': tamanho_pagina,
-        'codigoItemCatalogo': codigo_item_catalogo
     }
+    if tipo_item == 'Material':
+        params['tipo'] = 'codigoItemCatalogo'
+        params['codigo'] = codigo_item_catalogo
+    else:
+        params['codigoItemCatalogo'] = codigo_item_catalogo
+    return params
+
+
+def obter_itens(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina):
+    """Consulta a API do Compras.gov.br e retorna os itens encontrados."""
+    url = CONSULTAR_MATERIAL_URL if tipo_item == 'Material' else CONSULTAR_SERVICO_URL
+    params = montar_params(tipo_item, codigo_item_catalogo, pagina, tamanho_pagina)
     try:
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
@@ -109,7 +122,7 @@ with col1:
     codigo_item_catalogo = st.text_input("Código do Item de Catálogo", value="", key='codigo_item_catalogo')
 with col2:
     pagina = st.number_input("Página", min_value=1, value=1, step=1)
-    tamanho_pagina = st.number_input("Itens por página", min_value=10, value=500, step=10)
+    tamanho_pagina = st.number_input("Itens por página", min_value=10, max_value=500, value=500, step=10)
 with col3:
     usar_filtro_data = st.checkbox("Filtrar por data da compra", value=False)
     

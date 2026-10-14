@@ -1,0 +1,2 @@
+# Dependências de desenvolvimento (não entram no ambiente do Streamlit Cloud)
+pytest
